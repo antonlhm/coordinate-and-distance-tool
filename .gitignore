@@ -1,0 +1,16 @@
+.DS_Store
+node_modules/
+web/dist/
+.env
+*.token
+
+# Not part of the published web site: specs, planning and reference material
+specs/
+docs/
+tickets/
+design/
+tools/
+reference material/
+MASTER-SPEC.md
+CLAUDE.md
+*.pdf
