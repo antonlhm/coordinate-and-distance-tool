@@ -1,9 +1,9 @@
 // Mathematical accuracy: invariants that must hold for any input, checked against independent geometry
 // (not against stored answers). Deterministic pseudo-random inputs so failures reproduce.
 import { describe, expect, it } from 'vitest';
-import { dirDist, inverseRadial, intersectDirections, intersectDistances, polar, shortBase } from '../src/calc/engine';
+import { dirDist, inverseRadial, intersectDirections, intersectDistances, polar } from '../src/calc/engine';
 import { foldHalfTurn, foldSigned, normPiiru, piiruToDeg, piiruToMil } from '../src/core/angle';
-import { type UTM, bearing, distance, forward, inverse, offset } from '../src/core/geo';
+import { type UTM, bearing, distance, forward, inverse } from '../src/core/geo';
 import { mgrsToUTM, utmToMGRS } from '../src/core/mgrs';
 
 let seed = 12345;
@@ -105,31 +105,5 @@ describe('inverse radial', () => {
       near(r.v.easting, own.easting, 1e-6);
       near(r.v.northing, own.northing, 1e-6);
     }
-  });
-});
-
-describe('lyhytkanta exact mode', () => {
-  it('equals the true bearing and distance from the firing position to the target', () => {
-    for (let i = 0; i < 300; i++) {
-      const tjp = at(500000, 6800000);
-      const tahs = between(0, 6000);
-      const d = between(200, 3000);
-      const b = between(-150, 150); // + = TJP right of the unit
-      const a = between(-100, 100); // + = unit behind the TJP
-      const target = offset(tjp, tahs, d);
-      // Observation frame: u along TJP→target, r to its right. Unit G = TJP − a·u − b·r.
-      const unit = offset(offset(tjp, tahs, -a), tahs + 1500, -b);
-      const out = shortBase({ tahs, tahet: d, b, a, exact: true }).outputs;
-      const ams = (out.find((x) => x.key === 'ams') as { v: number }).v;
-      const amet = (out.find((x) => x.key === 'amet') as { v: number }).v;
-      near(amet, distance(unit, target), 1e-6);
-      lateralMiss(ams, bearing(unit, target), amet);
-    }
-  });
-  it('field rule overstates exact by the constant 6000/2π / 1000 = 1.0472 for small shifts', () => {
-    const exact = shortBase({ tahs: 1000, tahet: 5000, b: 10, a: 0, exact: true }).outputs;
-    const field = shortBase({ tahs: 1000, tahet: 5000, b: 10, a: 0, exact: false }).outputs;
-    const v = (o: typeof exact): number => (o.find((x) => x.key === 'delta') as { v: number }).v;
-    near(v(field) / v(exact), (2 * Math.PI) / 6, 1e-4);
   });
 });

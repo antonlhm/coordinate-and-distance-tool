@@ -141,33 +141,11 @@ export const CALCS: Record<string, CalcDef> = {
     blocks: [{ fields: [pos('p1')] }, { fields: [dist('base')] }, { fields: [dir('dir12'), dir('dir13'), dir('dir23')] }],
     compute: (v) => E.baseMeasurement(v.p1, v.base, v.dir12, v.dir13, v.dir23),
   },
-  shortbase: {
-    id: 'shortbase',
-    blocks: [
-      { fields: [dir('tahs'), dist('tahet')] },
-      { fields: [num('b', true, 'm'), num('a', true, 'm')] },
-      { fields: [{ name: 'mode', kind: 'choice', choices: ['field', 'exact'], def: 'field' }] },
-      { fields: [dir('mirrorPl', true)] },
-    ],
-    compute: (v) =>
-      E.shortBase({ tahs: v.tahs, tahet: v.tahet, b: v.b ?? 0, a: v.a ?? 0, exact: v.mode === 'exact', mirrorPl: v.mirrorPl }),
-  },
-  smoke: {
-    id: 'smoke',
-    blocks: [
-      { fields: [pos('a')] },
-      { fields: [dir('from')] },
-      { fields: [dist('d', true), num('w', true, 'm/s'), num('t', true, 's')] },
-      { fields: [pos('tjp', true)] },
-    ],
-    compute: (v) => E.smokePoint({ area: v.a, from: v.from, d: v.d, w: v.w, t: v.t, tjp: v.tjp }),
-  },
 };
 
-export const GROUPS: { id: 'direction' | 'position' | 'fire'; ids: string[] }[] = [
+export const GROUPS: { id: 'direction' | 'position'; ids: string[] }[] = [
   { id: 'direction', ids: ['dirdist', 'polar', 'angle', 'yk', 'triangle'] },
   { id: 'position', ids: ['traverse', 'invrad', 'intersect', 'base'] },
-  { id: 'fire', ids: ['shortbase', 'smoke'] },
 ];
 
 export type ParsedField = { value: unknown } | { error: string };

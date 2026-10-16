@@ -82,7 +82,7 @@ export function mount(root: HTMLElement, app: App): void {
     const id = route.replace(/^\/+|\/+$/g, '');
     const def = CALCS[id];
     document.title = def ? `${t(`calc.${id}.title`)} · ${t('web.title')}` : t('web.title');
-    const main = def ? calcView(def) : id === 'about' ? aboutView() : listView();
+    const main = def ? calcView(def) : listView();
     root.replaceChildren(header(), main, footer());
   };
 
@@ -119,7 +119,7 @@ export function mount(root: HTMLElement, app: App): void {
   };
 
   const footer = (): HTMLElement =>
-    h('footer', {}, h('p', {}, t('disclaimer.body'), ' ', t('web.disclaimer.extra')), h('p', {}, link('/about', 'plain', t('web.about.link'))));
+    h('footer', {}, h('p', {}, t('web.asis')));
 
   const listView = (): HTMLElement =>
     h('main', {},
@@ -130,12 +130,6 @@ export function mount(root: HTMLElement, app: App): void {
           h('ul', { class: 'cards' },
             ...g.ids.map((id) =>
               h('li', {}, link(`/${id}`, 'card', h('span', { class: 'card-title' }, t(`calc.${id}.title`)), h('span', { class: 'card-sub' }, t(`calc.${id}.summary`)))))))));
-
-  const aboutView = (): HTMLElement =>
-    h('main', {},
-      link('/', 'back', t('web.back')),
-      h('h1', {}, t('web.about.title')),
-      ...[1, 2, 3, 4].map((n) => h('p', {}, t(`web.about.body${n}`))));
 
   const fieldLabel = (def: CalcDef, f: Field): string => {
     const k = f.labelKey ?? `calc.${def.id}.field.${f.name}`;

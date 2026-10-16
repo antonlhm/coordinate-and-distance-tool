@@ -64,7 +64,7 @@ describe('strings (WEB-009)', () => {
   });
 
   it('defines every title, summary, hint, block title, field label and group used by the forms', () => {
-    const groups = ['direction', 'position', 'fire'];
+    const groups = ['direction', 'position'];
     const need = new Set<string>(groups.map((g) => `calc.group.${g}`));
     for (const [id, def] of Object.entries(CALCS)) {
       for (const k of ['title', 'summary', 'now']) need.add(`calc.${id}.${k}`);

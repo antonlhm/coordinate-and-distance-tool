@@ -11,7 +11,7 @@ import {
   piiruToRad,
   radToPiiru,
 } from '../core/angle';
-import { type UTM, bearing, centralMeridian, inverse, offset, projectInto } from '../core/geo';
+import { type UTM, centralMeridian, inverse, offset, projectInto } from '../core/geo';
 
 export interface Warn {
   key: string;
@@ -262,100 +262,6 @@ export function baseMeasurement(p1: UTM, base: number, dir12: number, dir13: num
   );
   res.steps.push('P₂ = P₁ + b·u(P₁→P₂)', `γ = ${r1(r.angle)} v; far distance ${r1(far)} m`);
   res.warnings.push(...w);
-  return res;
-}
-
-// MARK: CALC-SHORTBASE — lyhytkanta (numbers only; no command string, SPEC-WEB §1.1)
-
-export const SHORT_BASE_MAX = 200;
-export const LARGE_PARALLAX = 300;
-export interface ShortBaseInput {
-  tahs: number;
-  tahet: number;
-  b: number;
-  a: number;
-  exact: boolean;
-  mirrorPl?: number;
-}
-const TABLE_BASES = [25, 50, 75, 100, 150, 200, 250, 300];
-const TABLE_KM = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.2, 1.5];
-export function shortBase(i: ShortBaseInput): Res {
-  const res = empty();
-  const { tahs, tahet, b, a } = i;
-  const base = Math.hypot(a, b);
-  const baseWarn = (): void => {
-    if (base > SHORT_BASE_MAX) res.warnings.push({ key: 'calc.warning.baseTooLong', p: { m: Math.round(base) } });
-  };
-  if (i.mirrorPl !== undefined) {
-    // Method 2: Pl to the mirrored point is the firing direction.
-    const delta = foldSigned(i.mirrorPl - tahs);
-    res.outputs.push(
-      { key: 'ams', kind: 'dir', v: i.mirrorPl },
-      { key: 'amet', kind: 'dist', v: tahet + a },
-      { key: 'delta', kind: 'num', v: delta, unit: 'v' },
-      { key: 'hint', kind: 'text', v: delta >= 0 ? 'OILI' : 'VAPO' },
-    );
-    res.steps.push('AMS = Pl to the mirrored point; AMET = TÄHET + a');
-    baseWarn();
-  } else {
-    let delta: number;
-    let amet: number;
-    if (i.exact) {
-      amet = Math.hypot(tahet + a, b);
-      delta = foldSigned(radToPiiru(Math.atan2(b, tahet + a)));
-      res.steps.push(`AMET = √((D + a)² + b²) = ${r1(amet)} m`, `δ = atan2(b, D + a) = ${r1(delta)} v`);
-    } else {
-      delta = tahet > 0 ? b / (tahet / 1000) : 0;
-      amet = tahet + a;
-      res.steps.push(`δ = b / TÄHET[km] = ${r1(delta)} v`, `AMET = TÄHET + a = ${r1(amet)} m`);
-    }
-    baseWarn();
-    if (Math.abs(delta) > LARGE_PARALLAX) res.warnings.push({ key: 'calc.warning.largeParallax' });
-    res.outputs.push(
-      { key: 'ams', kind: 'dir', v: normPiiru(tahs + delta) },
-      { key: 'amet', kind: 'dist', v: amet },
-      { key: 'delta', kind: 'num', v: delta, unit: 'v' },
-      { key: 'hint', kind: 'text', v: b >= 0 ? 'OILI' : 'VAPO' },
-    );
-  }
-  // Reference table, computed by v = m / km (a formula, not a stored doctrine table).
-  res.outputs.push({
-    key: 'table',
-    kind: 'table',
-    head: TABLE_BASES,
-    rows: TABLE_KM.map((km) => ({ label: km, cells: TABLE_BASES.map((m) => Math.round(m / km)) })),
-  });
-  return res;
-}
-
-// MARK: CALC-SMOKEPOINT (D53)
-
-export const SMOKE_SECTOR = 750;
-export interface SmokeInput {
-  area: UTM;
-  from: number;
-  d?: number;
-  w?: number;
-  t?: number;
-  tjp?: UTM;
-}
-export function smokePoint(i: SmokeInput): Res | null {
-  const res = empty();
-  const drift = i.d ?? (i.w !== undefined && i.t !== undefined ? i.w * i.t : undefined);
-  if (drift === undefined) {
-    return i.d === undefined && (i.w !== undefined || i.t !== undefined) ? { ...res, warnings: [{ key: 'calc.warning.needDistanceOrTime' }] } : null;
-  }
-  res.outputs.push({ key: 'position', kind: 'pos', v: offset(i.area, i.from, drift) }, { key: 'd', kind: 'dist', v: drift });
-  if (i.tjp) {
-    const beta = bearing(i.tjp, projectInto(i.area, i.tjp.zone));
-    let rel: string;
-    if (foldHalfTurn(i.from - beta) <= SMOKE_SECTOR) rel = 'head';
-    else if (foldHalfTurn(i.from - beta - 3000) <= SMOKE_SECTOR) rel = 'tail';
-    else rel = 'cross';
-    res.outputs.push({ key: 'relation', kind: 'text', v: rel });
-  }
-  res.steps.push('P = A + d·u(θ_from)');
-  if (drift === 0) res.warnings.push({ key: 'calc.warning.zeroDrift' });
   return res;
 }
 
